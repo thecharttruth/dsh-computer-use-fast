@@ -637,7 +637,7 @@ function Invoke-Ocr($req) {
   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("dsh-ocr-" + [Guid]::NewGuid().ToString('N') + ".png")
   try {
     $capture = Invoke-Screenshot @{ handle = $req.handle; format = 'png'; maxWidth = 4000; maxHeight = 4000 }
-    $b64 = $capture.image
+    $b64 = $capture.base64
     if ($null -eq $b64) { throw 'offscreen capture returned no image' }
     [System.IO.File]::WriteAllBytes($tmp, [Convert]::FromBase64String($b64))
 
