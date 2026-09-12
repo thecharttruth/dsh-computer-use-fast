@@ -240,3 +240,25 @@ node test/tier2-e2e.mjs      # optional: opens Notepad and proves background inp
 The first two are read-only against your desktop — they never click, type, or move the
 pointer anywhere it was not already. The third opens a Notepad window, so run it when you
 are not mid-sentence elsewhere; it closes the window afterwards.
+
+
+## Licence and contributing
+
+**MIT.** Do whatever you want with it: use it, modify it, fork it, ship it commercially, redistribute it.
+There are no restrictions and no warranty. See `LICENSE`.
+
+Contributions are welcome - open an issue or a pull request at
+<https://github.com/thecharttruth/dsh-computer-use-fast>.
+
+## Provenance and attribution
+
+This package is distributed as part of the **DeepSeek Harness** plugin ecosystem and depends on
+`@deepseek-ai/dsh-tools`. It is built on the `dsh-computer-use-fast` component that ships with the
+harness, with these additions by this repository:
+
+- the `computer_ocr` tool (offscreen capture + built-in Windows OCR)
+- packaging for standalone distribution (metadata, `INSTALL.md`, licence)
+- documentation of the idle-gate cooperation semantics
+
+If you are the upstream author and would like attribution changed or the redistribution removed,
+please open an issue and it will be actioned.

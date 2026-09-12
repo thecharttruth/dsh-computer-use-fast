@@ -1,56 +1,52 @@
 {
-  "name": "dsh-computer-use-fast",
-  "version": "0.2.0",
-  "private": false,
-  "description": "Fast native Windows computer use for DeepSeek Harness: one resident driver, explicit screenshot-to-desktop coordinate mapping, non-invasive UI Automation and offscreen OCR, approval gate on mutating actions.",
-  "type": "module",
-  "main": "index.js",
-  "exports": {
-    ".": {
-      "default": "./index.js"
-    },
-    "./driver.ps1": "./driver.ps1",
-    "./cordis.patch.yml": "./cordis.patch.yml",
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "index.js",
-    "driver.ps1",
-    "cordis.patch.yml",
-    "README.md",
-    "INSTALL.md",
-    "LICENSE"
-  ],
-  "engines": {
-    "node": ">=22"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/thecharttruth/dsh-computer-use-fast.git"
-  },
-  "keywords": [
-    "deepseek-harness",
-    "dsh",
-    "dsh-plugin",
-    "cordis",
-    "cordis-plugin",
-    "computer-use",
-    "ui-automation",
-    "windows",
-    "ocr"
-  ],
-  "peerDependencies": {
-    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6"
-  },
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    }
-  },
-  "scripts": {
-    "bench": "node test/driver-bench.mjs",
-    "test": "node test/smoke.mjs",
-    "e2e": "node test/tier2-e2e.mjs"
-  }
+    "name":  "dsh-computer-use-fast",
+    "version":  "0.2.0",
+    "private":  false,
+    "description":  "Fast native Windows computer use for DeepSeek Harness: one resident driver, explicit screenshot-to-desktop coordinate mapping, non-invasive UI Automation and offscreen OCR, approval gate on mutating actions.",
+    "type":  "module",
+    "main":  "index.js",
+    "exports":  {
+                    ".":  {
+                              "default":  "./index.js"
+                          },
+                    "./driver.ps1":  "./driver.ps1",
+                    "./cordis.patch.yml":  "./cordis.patch.yml",
+                    "./package.json":  "./package.json"
+                },
+    "files":  [
+                  "index.js",
+                  "driver.ps1",
+                  "cordis.patch.yml",
+                  "README.md",
+                  "INSTALL.md",
+                  "LICENSE"
+              ],
+    "engines":  {
+                    "node":  "\u003e=22"
+                },
+    "license":  "MIT",
+    "author":  "thecharttruth",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/thecharttruth/dsh-computer-use-fast.git"
+                   },
+    "keywords":  [
+                     "deepseek-harness",
+                     "dsh",
+                     "dsh-plugin",
+                     "cordis",
+                     "cordis-plugin",
+                     "computer-use",
+                     "ui-automation",
+                     "windows",
+                     "ocr"
+                 ],
+    "peerDependencies":  {
+                             "@deepseek-ai/dsh-tools":  "^0.1.0-rc.6"
+                         },
+    "dsh":  {
+                "bundle":  {
+                               "patch":  "./cordis.patch.yml"
+                           }
+            }
 }

@@ -19,18 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-PROVENANCE NOTE - read before relying on this licence
-
-This package is a build of the dsh-computer-use-fast component that ships with the
-DeepSeek Harness, with modifications (see PLUGIN-RELEASE-NOTES.md): the computer_ocr
-tool and packaging changes.
-
-It depends on @deepseek-ai/dsh-tools and is a DeepSeek Harness component rather than
-an independent work. The MIT text above is a placeholder chosen so the package is
-legally explicit rather than silent. If the upstream licence differs, or if you do
-not hold the rights to redistribute the original, replace this file.
-
-Do not publish until this note has been resolved.
