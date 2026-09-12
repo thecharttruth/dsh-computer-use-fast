@@ -1,0 +1,24 @@
+# dsh-computer-use-fast — bundle patch layer.
+#
+# Mounted into a profile by adding this package to `dsh.profile.bundles`
+# (`dsh plugin --profile <name> add link:<path-to-this-package>`).
+#
+# approvalMode:
+#   mutating  - ask before click/type/key/drag/scroll/move/focus/batch; reads are free (default)
+#   always    - ask before every computer_* tool, including screenshots
+#   never     - never ask; every action runs unattended
+#
+# Note: with the session approval policy set to "never", an "ask" decision is
+# rejected automatically, so mutating tools do nothing. Use approvalMode: never
+# only when you deliberately want unattended control.
+- insert:
+    - id: computer-use-fast
+      name: dsh-computer-use-fast
+      config:
+        approvalMode: mutating
+        maxScreenshotWidth: 1920
+        maxScreenshotHeight: 1200
+        screenshotFormat: png
+        jpegQuality: 80
+        requestTimeoutMs: 15000
+        driverWarmup: true
