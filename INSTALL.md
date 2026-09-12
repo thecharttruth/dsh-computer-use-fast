@@ -4,14 +4,14 @@
 
 Open a DeepSeek Harness session and say:
 
-> **Install this plugin for me: https://github.com/thehcarttruth/dsh-computer-use-fast**
+> **Install this plugin for me: https://github.com/thecharttruth/dsh-computer-use-fast**
 
 The agent runs the install for you. Under the hood that is one command, shown below if you prefer to type it.
 
 ## The command it runs
 
 ```sh
-dsh plugin --profile web add github:thehcarttruth/dsh-computer-use-fast
+dsh plugin --profile web add github:thecharttruth/dsh-computer-use-fast
 ```
 
 `dsh plugin` forwards its arguments to **pnpm** inside the profile directory, so any pnpm spec works -
