@@ -19,21 +19,13 @@ import { createInterface } from 'node:readline'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import { requiresApproval } from './security-policy.js'
+import { CaptureFiles, validateCaptureName } from './capture-files.js'
 
 export const name = 'computer-use-fast'
 export const inject = ['tools']
 
 const DRIVER_PATH = join(dirname(fileURLToPath(import.meta.url)), 'driver.ps1')
-const TOOL_PREFIX = 'computer_'
-
-/** Tools that change desktop state and therefore face the approval gate. */
-const MUTATING_TOOLS = new Set([
-  'computer_click', 'computer_move', 'computer_drag', 'computer_scroll',
-  'computer_type', 'computer_key', 'computer_focus', 'computer_focus_force', 'computer_pin',
-  'computer_batch', 'computer_uia_act', 'computer_bg_click', 'computer_bg_key',
-  'computer_arrange_windows',
-])
-
 const BATCH_ACTIONS = ['click', 'move', 'drag', 'scroll', 'type', 'key', 'wait', 'focus']
 const MAX_BATCH_STEPS = 24
 
@@ -371,7 +363,11 @@ function describeGate(exec) {
     case 'computer_focus_force':
       return `force window handle ${args.handle} into the foreground`
     case 'computer_render_check':
-      return `check whether window handle ${args.handle} is painting content or is blank`
+      return `check window handle ${args.handle}${args.save_path != null ? ` and save a PNG named ${JSON.stringify(args.save_path)} in the capture directory` : ''}`
+    case 'computer_release':
+      return 'release the pinned input target'
+    case 'computer_uia_scan':
+      return `scan and scroll window handle ${args.handle}`
     case 'computer_pin':
       return `pin the input target to window handle ${args.handle}${args.focus ? ' (taking the foreground)' : ''}`
     case 'computer_uia_act': {
@@ -401,6 +397,7 @@ function describeGate(exec) {
 export function apply(ctx, rawConfig) {
   const config = resolveConfig(rawConfig)
   const driver = new Driver(config.requestTimeoutMs)
+  const captureFiles = new CaptureFiles()
   ctx.effect(() => () => driver.dispose())
   if (config.driverWarmup) {
     driver.warm().catch((error) => ctx.logger?.warn?.(`[computer-use-fast] driver warm-up failed: ${error.message}`))
@@ -408,8 +405,7 @@ export function apply(ctx, rawConfig) {
 
   if (config.approvalMode !== 'never') {
     ctx.on('tools/pre-execute', async (exec, next) => {
-      if (!exec.name.startsWith(TOOL_PREFIX)) return next()
-      if (config.approvalMode === 'mutating' && !MUTATING_TOOLS.has(exec.name)) return next()
+      if (!requiresApproval(config.approvalMode, exec)) return next()
       return { kind: 'ask', reason: `Computer Use requests permission to ${describeGate(exec)}.` }
     })
   }
@@ -730,16 +726,19 @@ export function apply(ctx, rawConfig) {
       'Capture a window offscreen and report whether it is actually painting content or is a blank surface.',
       'Returns a verdict (rendered, blank-white, blank-black, blank-uniform, blank-near-uniform, capture-refused) plus pixel statistics and whether the window holds the foreground.',
       'Use it when a window looks empty: computer_screenshot cannot distinguish "the application drew nothing" from "Windows refused the offscreen capture", because both surface as the same error.',
-      'Pass save_path to also write the capture to a PNG for visual inspection.',
+      'Pass save_path as a simple PNG filename to save in this session\'s private capture directory. Saving requires approval; existing files are never overwritten.',
     ].join(' '),
     parameters: {
       handle: { type: 'integer', required: true, description: 'Window handle reported by computer_windows.' },
-      save_path: { type: 'string', description: 'Optional PNG path to write the capture to, for visual inspection.' },
+      save_path: { type: 'string', description: 'Optional PNG filename, such as capture.png. No directories, drive letters or network paths. The full saved path is returned.' },
     },
     output: textOutput(),
     timeoutMs: 20000,
     async execute(args, exec) {
-      const result = await driver.call('render-check', { handle: args.handle, savePath: args.save_path }, exec.signal)
+      const saveCapture = args.save_path != null
+      if (saveCapture) validateCaptureName(args.save_path)
+      const result = await driver.call('render-check', { handle: args.handle, includeImage: saveCapture }, exec.signal)
+      const savedPath = saveCapture ? await captureFiles.save(args.save_path, result.pngBase64) : null
       const pct = (value) => `${(Number(value) * 100).toFixed(1)}%`
       const lines = [
         `Window ${args.handle} (${result.width}x${result.height}) verdict: ${result.verdict}.`,
@@ -749,7 +748,7 @@ export function apply(ctx, rawConfig) {
       if (String(result.verdict).startsWith('blank')) {
         lines.push('A blank verdict on a window that should have content usually means either the application failed to build its resource dictionaries (for example a missing theme or image assembly), or it is GPU-composited and needs the foreground. Try computer_focus_force first, then computer_screenshot with target=active.')
       }
-      if (result.savedPath) lines.push(`Capture written to ${result.savedPath}.`)
+      if (savedPath) lines.push(`Capture written to ${savedPath}.`)
       return lines.join('\n')
     },
   })
@@ -1078,7 +1077,7 @@ export function apply(ctx, rawConfig) {
       handle: { type: 'integer', required: true, description: 'Window handle from computer_windows. Captured offscreen, so it need not be visible or focused.' },
     },
     output: {
-      schema: { type: 'object', properties: { handle: { type: 'integer' }, lineCount: { type: 'integer' }, text: { type: 'string' } }, required: ['handle', 'lineCount', 'text'], additionalProperties: false },
+      schema: { type: 'object', properties: { handle: { type: 'integer', required: true }, lineCount: { type: 'integer', required: true }, text: { type: 'string', required: true } }, additionalProperties: false },
       render(_args, value) {
         const body = value.text.length > 0 ? value.text : '(no text recognised)'
         return [{ type: 'text', text: `OCRed ${value.lineCount} line(s) from window ${value.handle}:${String.fromCharCode(10)}${body}` }]

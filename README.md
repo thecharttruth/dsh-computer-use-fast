@@ -44,7 +44,7 @@ Two further speed features:
 | `computer_idle` | no | read | Idle time and the current gate verdict, for pacing a run. |
 | `computer_uia_list` | **no** | read | UI Automation tree: names, types, ids, rectangles, values, supported patterns. |
 | `computer_pin` | no | ask | Claim a window as the input target; later actions are refused if it loses focus. |
-| `computer_release` | no | read | Drop the pin. |
+| `computer_release` | no | ask | Drop the pin. |
 | `computer_uia_act` | **no** | ask | Invoke / set_value / select / toggle / expand / collapse / scroll_into_view / focus an element. |
 | `computer_bg_click` | **no** | ask | Post a click to a window by handle. |
 | `computer_bg_key` | **no** | ask | Post text or a chord to a window by handle. |
@@ -56,7 +56,7 @@ Two further speed features:
 | `computer_key` | yes | ask | Press a key or chord, e.g. `["CTRL","L"]`. |
 | `computer_focus` | yes | ask | Bring a window forward (and pin it). |
 | `computer_focus_force` | yes | ask | Full foreground-transfer sequence — AttachThreadInput, BringWindowToTop, an ALT nudge to clear the foreground lock, then verify and retry — for when `computer_focus` is refused. |
-| `computer_render_check` | no | read | Capture a window offscreen and report whether it is painting content or is blank, with pixel statistics and a verdict. |
+| `computer_render_check` | no | ask when saving | Capture a window offscreen and report whether it is painting content or is blank, with pixel statistics and a verdict. |
 | `computer_ocr` | **no** | read | Read the **text** displayed in a window without focusing it: offscreen PrintWindow capture, then the built-in Windows OCR engine. For panels that expose no UI Automation tree - grids, charts, statistics readouts that are pixels only. |
 | `computer_wait` | no | read | Sleep briefly. |
 | `computer_batch` | yes | ask once | 1-24 foreground input steps back to back. |
@@ -141,7 +141,13 @@ drew nothing" from "Windows refused the offscreen capture" — both surface as t
 - pixel statistics: distinct colours, mean and standard deviation of luminance, and the fraction of
   near-white and near-black samples;
 - whether the window currently holds the foreground;
-- optionally the PNG itself via `save_path`.
+- optionally the PNG itself via `save_path`, which accepts a filename such as
+  `capture.png`. Saving requires approval in `mutating` mode. Files are created
+  in a private, per-session `dsh-captures-*` temporary directory and the full
+  path is returned. Directory paths, network paths and overwrites are refused.
+
+`computer_uia_scan` also requires approval when it can scroll. Set `max_pages: 0`
+for a read-only tree scan. Releasing the target pin requires approval, too.
 
 Read it like this:
 
@@ -191,7 +197,7 @@ whole config object, so restate every key you want to keep.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `approvalMode` | `mutating` | `mutating` asks before input actions only, `always` asks for every tool, `never` never asks. |
+| `approvalMode` | `mutating` | `mutating` asks before input, scrolling scans, pin release and capture saves; unknown computer tools also require approval. `always` asks for every tool; `never` never asks. |
 | `focusGuard` | `true` | `computer_focus` pins the target by default. |
 | `minUserIdleMs` | `0` | Foreground input is refused until the user has been idle this long; 0 disables the gate. |
 | `maxScreenshotWidth` | `1920` | Capture is scaled down to fit; 320-10000. |
@@ -210,8 +216,10 @@ whole config object, so restate every key you want to keep.
 - **No network, ever.** Neither `index.js` nor `driver.ps1` contains a URL, HTTP client,
   socket, telemetry, or update check. Nothing about your desktop leaves the machine — in
   particular there is no "vision model fallback" that uploads screenshots.
-- **No files written.** The driver writes nothing to disk: screenshots travel as bytes
-  over the pipe; no temp files, caches, or logs.
+- **Controlled capture files.** Captures travel over the driver pipe. Optional
+  saves use exclusive creation in a private temporary directory after the
+  approval gate. OCR uses a temporary image internally. Saved captures can
+  contain sensitive screen content; remove them when no longer needed.
 - **No clipboard access.** Typing uses `SendInput` with `KEYEVENTF_UNICODE`; the
   background path uses `WM_CHAR`. Delete and re-type rather than paste.
 - **No keyboard hooks.** Input is injected, never observed; the plugin cannot see what you
@@ -221,7 +229,7 @@ whole config object, so restate every key you want to keep.
   and input travels as JSON over stdin.
 - **Bounded by construction** in both layers, as listed under Tier 1.
 - **Fail closed on approval** with `approvalMode` at `mutating` or `always`.
-- **Readable.** ~1,700 lines of plain source in two files, one dependency (`defineTool`),
+- **Readable.** Plain source plus small capture and approval-policy modules, one dependency (`defineTool`),
   no build step, no bundled or minified code, no native binaries beyond the Windows system
   DLLs PowerShell binds to.
 
@@ -230,6 +238,10 @@ can be refused when another process owns the foreground; `computer_uia_act focus
 keyboard focus inside the target window.
 
 ## Development
+
+Run `npm install --ignore-scripts` and `npm test` for the portable security tests.
+These verify actual tool registration, approval decisions, path rejection and
+exclusive capture creation without controlling the desktop.
 
 ```powershell
 node test/driver-bench.mjs   # driver protocol, latency, rejection matrix, UIA + offscreen reads

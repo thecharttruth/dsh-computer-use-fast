@@ -37,7 +37,7 @@ restate every key you want to keep.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `approvalMode` | `mutating` | `mutating` asks before click/type/key/drag/scroll/move/focus/batch; `always` asks before every tool including screenshots; `never` never asks |
+| `approvalMode` | `mutating` | `mutating` asks before input, scrolling scans, pin release and capture saves; `always` asks before every tool including screenshots; `never` never asks |
 | `focusGuard` | `true` | refuse input when the target window is not foreground |
 | `minUserIdleMs` | `0` | cursor-moving actions wait until keyboard/mouse have been quiet this long. **Set to ~3000 to keep the agent from taking the pointer out from under a human who is working.** `0` disables the wait |
 | `maxScreenshotWidth` / `Height` | 1920 / 1200 | capture cap |

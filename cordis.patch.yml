@@ -4,7 +4,7 @@
 # (`dsh plugin --profile <name> add link:<path-to-this-package>`).
 #
 # approvalMode:
-#   mutating  - ask before click/type/key/drag/scroll/move/focus/batch; reads are free (default)
+#   mutating  - ask before input, scrolling scans, pin release and capture saves; reads are free (default)
 #   always    - ask before every computer_* tool, including screenshots
 #   never     - never ask; every action runs unattended
 #

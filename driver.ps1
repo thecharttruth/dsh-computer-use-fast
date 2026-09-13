@@ -8,8 +8,9 @@
 # The P/Invoke surface is compiled once at startup, so after warm-up each request
 # costs the action itself plus a line of JSON — not a process launch.
 #
-# This file performs input and screen capture only. It has no network code, no
-# file writes, no registry access, no persistence, and no clipboard access.
+# This file performs input and screen capture only. It has no network code,
+# registry access or clipboard access. OCR uses a temporary file. Optional
+# saved captures are created exclusively by the Node host after approval.
 
 $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
@@ -934,7 +935,7 @@ function Invoke-UiaScan($req) {
   $maxNodes = if ($req.maxNodes) { [int]$req.maxNodes } else { 1500 }
   if ($maxNodes -lt 50) { $maxNodes = 50 }
   if ($maxNodes -gt 5000) { $maxNodes = 5000 }
-  $maxPages = if ($req.maxPages) { [int]$req.maxPages } else { 20 }
+  $maxPages = if ($null -ne $req.maxPages) { [int]$req.maxPages } else { 20 }
   if ($maxPages -lt 0) { $maxPages = 0 }
   if ($maxPages -gt 100) { $maxPages = 100 }
 
@@ -1140,10 +1141,15 @@ function Invoke-RenderCheck($req) {
   elseif ($blackFrac -ge 0.97) { $verdict = 'blank-black' }
   elseif ($std -lt 2.5) { $verdict = 'blank-near-uniform' }
 
-  $outPath = $null
-  if ($req.savePath) {
-    $outPath = [string]$req.savePath
-    $bmp.Save($outPath, [System.Drawing.Imaging.ImageFormat]::Png)
+  $pngBase64 = $null
+  if ($req.includeImage -eq $true) {
+    $stream = New-Object System.IO.MemoryStream
+    try {
+      $bmp.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
+      $pngBase64 = [Convert]::ToBase64String($stream.ToArray())
+    } finally {
+      $stream.Dispose()
+    }
   }
   $bmp.Dispose()
 
@@ -1160,7 +1166,7 @@ function Invoke-RenderCheck($req) {
     stdLuma       = [Math]::Round($std, 2)
     whiteFraction = [Math]::Round($whiteFrac, 4)
     blackFraction = [Math]::Round($blackFrac, 4)
-    savedPath     = $outPath
+    pngBase64     = $pngBase64
   }
 }
 
